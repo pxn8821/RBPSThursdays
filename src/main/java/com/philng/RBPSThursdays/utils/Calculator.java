@@ -16,6 +16,8 @@ import java.util.*;
 @Component
 public class Calculator {
     private static final Map<Integer, Double> handicapFactors = new HashMap<>();
+
+    private static final double NOT_PRESENT_SCORING_FACTOR = 0.7;
     static {
         handicapFactors.put( 32, 4.46031029);
         handicapFactors.put( 31, 4.531679787);
@@ -118,7 +120,9 @@ public class Calculator {
         long time = System.currentTimeMillis();
         System.out.println("Running Full Recalculate");
 
+        //
         // Count how many stages and matches someone shoots
+        //
         for( Shooter shooter : shooterRepository.findAll() )
         {
             int numStages = 0;
@@ -129,7 +133,7 @@ public class Calculator {
 
                 for( Stage stage : match.getStages() )
                 {
-                    if( stage.getShooters().stream().anyMatch( s -> s.getShooter().getId() == shooter.getId() ) )
+                    if( stage.getShooters().stream().anyMatch( s -> s.getShooter().getId() == shooter.getId() && s.getRawMatchPoints() > 0 ) )
                     {
                         if( !wasInMatch )
                         {
@@ -148,8 +152,9 @@ public class Calculator {
         }
 
 
-
+        //
         // Calculate a person's Handicap for each stage they shot
+        //
         for( Shooter shooter : shooterRepository.findAll() )
         {
             for( Match match : matchRepository.findAll() )
@@ -192,13 +197,16 @@ public class Calculator {
                     int roundCount = stageShooter.getStage().getRoundCount();
                     stageShooter.setStartingHandicap( startingHandicap );
                     stageShooter.setNewHandicap( handicap );
+
                     stageShooter.setHandicapHitFactor(  stageShooter.getRawHitFactor() + stageShooter.getNewHandicap() * roundCount);
                     stageShooterRepository.saveAndFlush( stageShooter );
                 }
             }
         }
 
+        //
         // Calculate the overall match points with the new handicap data
+        //
         for( Match match : matchRepository.findAll() )
         {
             for( Stage stage : match.getStages() )
@@ -210,7 +218,7 @@ public class Calculator {
                 {
                     numShooters++;
                     sumPoints += shooter.getHandicapMatchPoints();
-                    if( shooter.getHandicapHitFactor() > hhf )
+                    if( shooter.getHandicapHitFactor() > hhf && shooter.getRawMatchPoints() > 0 )
                     {
                         hhf = shooter.getHandicapHitFactor();
                     }
@@ -224,12 +232,27 @@ public class Calculator {
                 // Update everyone else's percentage
                 for( StageShooter shooter : stage.getShooters() )
                 {
+                    if( shooter.getRawMatchPoints() <= 0 )
+                    {
+                        shooter.setHandicapHitFactor( 0 );
+                    }
+
                     double percentage = shooter.getHandicapHitFactor() / hhf;
                     double matchPoints = percentage * stage.getRoundCount() * 5;
 
                     percentage = percentage * 100;
                     shooter.setHandicapPercentage( percentage );
-                    shooter.setHandicapMatchPoints( matchPoints );
+
+                    if( shooter.getRawMatchPoints() > 0 )
+                    {
+                        if( matchPoints < 0 )
+                            matchPoints = 0;
+                        shooter.setHandicapMatchPoints( matchPoints );
+                    }
+                    else
+                    {
+                        shooter.setHandicapMatchPoints( stage.getAveragePoints() * NOT_PRESENT_SCORING_FACTOR ); // If a shooter didn't shoot this stage or gets a 0, their match points will be the stage's average points
+                    }
 
                     shooter.getShooter().setCurrentHandicap( shooter.getNewHandicap() );
                     shooter.getShooter().setCurrentPoints( shooter.getShooter().getCurrentPoints() + matchPoints );
@@ -239,7 +262,9 @@ public class Calculator {
             }
         }
 
+        //
         // For each shooter, if they have missed a match, then give them 70% of the average match points
+        //
         for( Shooter shooter : shooterRepository.findAll() )
         {
             for( Match match : matchRepository.findAll() )
@@ -261,7 +286,7 @@ public class Calculator {
                     double currentPoints = shooter.getCurrentPoints();
                     for( Stage stage : match.getStages() )
                     {
-                        currentPoints += stage.getAveragePoints() * 0.7;
+                        currentPoints += stage.getAveragePoints() * NOT_PRESENT_SCORING_FACTOR;
                     }
 
                     shooter.setCurrentPoints( currentPoints );
@@ -272,7 +297,9 @@ public class Calculator {
 
         matchShooterSummaryRepository.deleteAll();
 
+        //
         // Generate the match summary pages for all the matches
+        //
         for( Match match : matchRepository.findAll() )
         {
             Map<Long, MatchShooterSummary> summaryMap = new HashMap<>();
@@ -296,7 +323,7 @@ public class Calculator {
                     double matchPoints = 0;
                     for( Stage stage : match.getStages() )
                     {
-                        matchPoints += stage.getAveragePoints() * 0.7;
+                        matchPoints += stage.getAveragePoints() * NOT_PRESENT_SCORING_FACTOR;
                     }
 
                     MatchShooterSummary summary = new MatchShooterSummary();
