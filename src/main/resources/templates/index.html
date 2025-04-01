@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/base-layout">
+<head>
+    <meta charset="UTF-8">
+    <title>RBPS Thursdays Tool</title>
+
+</head>
+<div layout:fragment="page_content">
+
+    <div th:each="match : ${matches}">
+        <b><span th:text="${match.name}"></span></b><br/>
+        <a  th:href="@{/match/{id}(id=${match.id})}">Stages</a> |
+        <a th:href="@{/matchSummary/{id}(id=${match.id})}">Shooter Summary</a>
+
+    </div>
+
+</div>
+</html>

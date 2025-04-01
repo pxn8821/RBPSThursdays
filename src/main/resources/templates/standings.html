@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/base-layout">
+<head>
+  <meta charset="UTF-8">
+  <title>RBPS Thursdays Tool</title>
+
+</head>
+<div layout:fragment="page_content">
+  <script>
+    $(document).ready(function(){
+        var dt = new DataTable(".resultsTables",
+        {
+            order: [ [2, "desc"] ],
+            paging: false,
+            "columnDefs": [
+              { "orderable": false, "targets": 0 }
+            ]
+        });
+
+        dt.on('order.dt search.dt', function () {
+            let i = 1;
+            dt
+                .cells(null, 0, { search: 'applied', order: 'applied' })
+                .every(function (cell) {
+                    this.data(i++);
+                });
+        })
+        .draw();
+    });
+  </script>
+  <h3>Current Standings</h3>
+    <table class="resultsTables display compact table nowrap" style="width: 100%"  >
+      <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Points</th>
+        <th>Handicap</th>
+        <th># Matches</th>
+        <th># Stages</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="shooter : ${shooters} ">
+        <td></td>
+        <td th:text="${shooter.name}"></td>
+        <td th:text="${shooter.currentPoints}"></td>
+        <td th:text="${shooter.getCurrentHandicapDisplay}"></td>
+        <td th:text="${shooter.matchesShot}"></td>
+        <td th:text="${shooter.stagesShot}"></td>
+      </tr>
+      </tbody>
+    </table>
+</div>
+</html>

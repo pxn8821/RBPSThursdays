@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/base-layout">
+<head>
+    <meta charset="UTF-8">
+    <title>RBPS Thursdays Tool</title>
+
+</head>
+<div layout:fragment="page_content">
+    <script>
+        $(document).ready(function(){
+            new DataTable(".resultsTables",
+            {
+                order: [ [1, "desc"] ]
+            });
+        });
+    </script>
+    <form method="post" action="queueMatch">
+        Practiscore URL: <input name="url" type="text" size="50"/> <input type="submit">
+    </form>
+
+    <div th:if="${match != null}">
+        <hr/>
+        <h3 th:text="${match.name}"/>
+
+        <form method="post" action="processMatch">
+            <h4>New Shooters</h4>
+            <hr/>
+            <div th:each="name : ${unmappedNames}">
+                <div>
+                    <span th:text="${name}"></span>
+                    <select th:name="|unmappedNames[${name}]|">
+                        <option value="New Shooter">New Shooter</option>
+                        <option th:each="existingName : ${existingShooters}" th:value="${existingName}" th:text="${existingName}"></option>
+                    </select>
+                </div>
+            </div>
+            <hr/>
+            <input type="submit" value="Process Match and Add to Database"/>
+            <input type="hidden" name="url" th:value="${match.practiscoreURL}"/>
+        </form>
+        <div th:each="stage : ${match.stages}">
+            <h4 th:text="${stage.name}"/>
+            <table class="resultsTables display compact" >
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Raw Match Points</th>
+                        <th>Raw Hit Factor</th>
+                        <th>Raw %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="shooter : ${stage.shooters} ">
+                        <td th:text="${shooter.shooter.name}"></td>
+                        <td th:text="${shooter.rawMatchPoints}"></td>
+                        <td th:text="${shooter.rawHitFactor}"></td>
+                        <td th:text="${shooter.rawPercentage}"></td>
+                    </tr>
+                </tbody>
+
+
+            </table>
+        </div>
+    </div>
+
+</div>
+</html>

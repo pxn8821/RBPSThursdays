@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/base-layout">
+<head>
+  <meta charset="UTF-8">
+  <title>RBPS Thursdays Tool</title>
+
+
+</head>
+<div layout:fragment="page_content">
+  <script>
+    $(document).ready(function(){
+        $(".resultsTables").dataTable(
+        {
+            order: [ [6, "desc"] ],
+            paging: false,
+            scrollX: true
+        });
+
+        $(".summaryTable").dataTable(
+        {
+            order: [ [2, "desc"] ],
+            paging: false,
+            scrollX: true
+        });
+
+    });
+  </script>
+  <div th:if="${match != null}">
+    <hr/>
+    <h3 th:text="${match.name}"/>
+    <div><a th:href="${match.practiscoreURL}">PractiScore Link</a></div>
+    <div></div>
+
+    <h4>Match Summary</h4>
+    <table class="summaryTable display compact table nowrap order-column" style="width: 100%" >
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Raw Match Points</th>
+        <th>HC Match Points</th>
+        <th>HC %</th>
+        <th>Starting HC</th>
+        <th>New HC</th>
+        <th>HC Diff</th>
+
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="shooter : ${summary} ">
+        <td th:text="${shooter.shooter.name}"></td>
+        <td th:text="${shooter.rawMatchPointsDisplay}"></td>
+        <td th:text="${shooter.handicapMatchPointsDisplay}"></td>
+        <td th:text="${shooter.handicapPercentageDisplay}"></td>
+        <td th:text="${shooter.startingHandicapDisplay}"></td>
+        <td>
+          <span th:text="${shooter.newHandicapDisplay}"></span>
+        </td>
+        <td>
+              <span th:style="${shooter.getHandicapDiff > 0 } ? 'color: red' : 'color: green'">
+              <span th:text="${shooter.getHandicapDiffDisplay}"/>
+            </span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+
+    <div th:each="stage : ${match.stages}">
+      <hr/>
+      <h4 th:text="${stage.name}"/>
+      <div>Round count: <span th:text="${stage.roundCount}"/></div>
+      <div>Average Match Points: <span th:text="${stage.averagePoints}"></span></div>
+      <table class="resultsTables display resultsTables compact table nowrap order-column" style="width: 100%" >
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Raw Hit Factor</th>
+          <th>Raw %</th>
+          <th>Raw Stage Points</th>
+          <th>HC Hit Factor</th>
+          <th>HC %</th>
+          <th>HC Stage Points</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="shooter : ${stage.shooters} ">
+          <td th:text="${shooter.shooter.name}"></td>
+          <td th:text="${shooter.rawHitFactorDisplay}"></td>
+          <td th:text="${shooter.rawPercentageDisplay}"></td>
+          <td th:text="${shooter.rawMatchPointsDisplay}"></td>
+          <td th:text="${shooter.handicapHitFactorDisplay}"></td>
+          <td th:text="${shooter.handicapPercentageDisplay}"></td>
+          <td th:text="${shooter.handicapMatchPointsDisplay}"></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</html>
