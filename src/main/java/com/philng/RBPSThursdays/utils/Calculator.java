@@ -123,6 +123,50 @@ public class Calculator {
         //
         // Count how many stages and matches someone shoots
         //
+        long time1 = System.currentTimeMillis();
+        countStagesForShooters();
+        System.out.println("countStagesForShooters(): " + (System.currentTimeMillis() - time1) + " ms");
+
+        //
+        // Calculate a person's Handicap for each stage they shot
+        //
+        time1 = System.currentTimeMillis();
+        calculateShootersHandicapForStages();
+        System.out.println("calculateShootersHandicapForStages(): " + (System.currentTimeMillis() - time1) + " ms");
+
+        //
+        // Calculate the overall match points with the new handicap data
+        //
+        time1 = System.currentTimeMillis();
+        calculateOverallMatchPointsWithHandicapData();
+        System.out.println("calculateOverallMatchPointsWithHandicapData(): " + (System.currentTimeMillis() - time1) + " ms");
+
+        //
+        // For each shooter, if they have missed a match, then give them 70% of the average match points
+        //
+        time1 = System.currentTimeMillis();
+        addPointsForMissedMatches();
+        System.out.println("addPointsForMissedMatches(): " + (System.currentTimeMillis() - time1) + " ms");
+
+        //
+        // Generate the match summary pages for all the matches
+        //
+        time1 = System.currentTimeMillis();
+        generateMatchSummaryForAllMatches();
+        System.out.println("generateMatchSummaryForAllMatches(): " + (System.currentTimeMillis() - time1) + " ms");
+
+        System.out.println("Full Recalculate Finished. Time took: " + (System.currentTimeMillis() - time) + " ms");
+
+    }
+
+
+    /**
+     * For each shooter in the database:
+     *  Go through each match, and if the shooter shows up in any of the stages, then add 1 to their match count
+     *  Go through each stage, and if the shooter shows up, AND match points were greater than 0, then add 1 to their stage count
+     */
+    private void countStagesForShooters()
+    {
         for( Shooter shooter : shooterRepository.findAll() )
         {
             int numStages = 0;
@@ -150,11 +194,24 @@ public class Calculator {
             shooter.setStagesShot( numStages );
             shooterRepository.saveAndFlush( shooter );
         }
+    }
 
-
-        //
-        // Calculate a person's Handicap for each stage they shot
-        //
+    /**
+     * For every match, find all the stages that the shooter has shot. Then apply the handicap calculation to
+     * each stage. The calculation is as follows:
+     *  baseHandicapHitFactor = lookup table with round count
+     *  handicap = ( baseHandicapHitFactor - shooter's hit factor on that stage ) / round count
+     * <p>
+     *  The handicap is averaged between all the stages they shot that day. This is the calculated handicap. For example,
+     *  if the shooter shoots 3 stages in the day, their handicap will be: (handicap_stage_1 + handicap_stage_2 + handicap_stage_3 ) / 3
+     * <p>
+     *  The person's new handicap is the average of all the matches they shot during the season
+     * <p>
+     *  This method also sets the shooter's hit factor for their stages using the following calculation:
+     *      handicapHitFactor = raw hit factor + handicap * round count
+     */
+    private void calculateShootersHandicapForStages()
+    {
         for( Shooter shooter : shooterRepository.findAll() )
         {
             for( Match match : matchRepository.findAll() )
@@ -203,10 +260,25 @@ public class Calculator {
                 }
             }
         }
+    }
 
-        //
-        // Calculate the overall match points with the new handicap data
-        //
+    /**
+     * Once every shooter's handicap, and handicap hit factor is calculated for every stage:
+     * <p>
+     * For each stage, find the highest handicap hit factor, and find the average amount of stage points
+     * <p>
+     * Then, for every shooter in that stage, calculate their percentage using:
+     *  percentage = 100 * shooter's handicap hit factor / highest handicap hit factor
+     * <p>
+     * Also calculate their handicap match points:
+     *  handicap match points = percentage * stage round count * 5
+     * <p>
+     *  If the shooter gets a zero for raw match points (didn't shoot it, shot it really badly, etc.)
+     *    handicap match points = average amount of stage points * 0.70
+     *
+     */
+    private void calculateOverallMatchPointsWithHandicapData()
+    {
         for( Match match : matchRepository.findAll() )
         {
             for( Stage stage : match.getStages() )
@@ -261,10 +333,14 @@ public class Calculator {
                 }
             }
         }
+    }
 
-        //
-        // For each shooter, if they have missed a match, then give them 70% of the average match points
-        //
+    /**
+     * Go through every shooter in the database, find the matches that they did not participate in.
+     * For each stage of those matches, add 70% of the average stage scores to their current points
+     */
+    private void addPointsForMissedMatches()
+    {
         for( Shooter shooter : shooterRepository.findAll() )
         {
             for( Match match : matchRepository.findAll() )
@@ -294,12 +370,19 @@ public class Calculator {
                 }
             }
         }
+    }
 
+    /**
+     * For every user in the database, regardless if they participated or not in a match:
+     * <p>
+     * For every match, save the shooter's new handicap for that match (zero handicap if they did not participate)
+     * <p>
+     * For every match, get their total earned points for the match and save it, if they participated. If they
+     * did not participate, then they will earn 70% of the average match points for that match
+     */
+    private void generateMatchSummaryForAllMatches()
+    {
         matchShooterSummaryRepository.deleteAll();
-
-        //
-        // Generate the match summary pages for all the matches
-        //
         for( Match match : matchRepository.findAll() )
         {
             Map<Long, MatchShooterSummary> summaryMap = new HashMap<>();
@@ -337,11 +420,12 @@ public class Calculator {
 
             matchShooterSummaryRepository.saveAll( summaryMap.values() );
         }
-
-        System.out.println("Full Recalculate Finished. Time took: " + (System.currentTimeMillis() - time) + " ms");
-
     }
 
+
+    /**
+     * Add a new handicap for a specific shooter. This is used to calculate the average later
+     */
     private void addHandicapForShooter( Shooter shooter, double newHandicap )
     {
 
@@ -353,6 +437,9 @@ public class Calculator {
         shooterToHandicapMap.get( shooter.getId() ).add( newHandicap );
     }
 
+    /**
+     * Get the rolling handicap average for a specific shooter.
+     */
     private double getHandicapForShooter( Shooter shooter )
     {
 
