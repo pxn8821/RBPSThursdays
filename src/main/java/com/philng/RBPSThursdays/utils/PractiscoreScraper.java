@@ -64,9 +64,9 @@ public class PractiscoreScraper {
 
             String stageName = stages.get( i ).getText();
             int alphas = Integer.parseInt( elements.getFirst().findElements( By.tagName( "td" ) ).get( 11 ).getText() );
-            int charlies = Integer.parseInt( elements.getFirst().findElements( By.tagName( "td" ) ).get( 12 ).getText() );
-            int deltas = Integer.parseInt( elements.getFirst().findElements( By.tagName( "td" ) ).get( 13 ).getText() );
-            int mikes = Integer.parseInt( elements.getFirst().findElements( By.tagName( "td" ) ).get( 14 ).getText() );
+            int charlies = Integer.parseInt( elements.getFirst().findElements( By.tagName( "td" ) ).get( 13 ).getText() );
+            int deltas = Integer.parseInt( elements.getFirst().findElements( By.tagName( "td" ) ).get( 14 ).getText() );
+            int mikes = Integer.parseInt( elements.getFirst().findElements( By.tagName( "td" ) ).get( 15 ).getText() );
 
             Stage stage = new Stage();
             stage.setRoundCount( alphas + charlies + deltas + mikes );

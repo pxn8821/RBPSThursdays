@@ -17,7 +17,7 @@ import java.util.*;
 public class Calculator {
     private static final Map<Integer, Double> handicapFactors = new HashMap<>();
 
-    private static final double NOT_PRESENT_SCORING_FACTOR = 0.7;
+    private static final double NOT_PRESENT_SCORING_FACTOR = 0.5;
     static {
         handicapFactors.put( 32, 4.46031029);
         handicapFactors.put( 31, 4.531679787);
@@ -118,6 +118,7 @@ public class Calculator {
     public void recalculate()
     {
         long time = System.currentTimeMillis();
+        shooterToHandicapMap.clear();
         System.out.println("Running Full Recalculate");
 
         //
@@ -227,11 +228,22 @@ public class Calculator {
                 double handicap = 0;
                 for( StageShooter stageShooter : shooterStages )
                 {
+                    // Calculate average hit factor
+                    List<StageShooter> shootersForAverageHitFactor = stageShooter.getStage().getShooters();
+                    OptionalDouble averageHitFactor = shootersForAverageHitFactor.stream().mapToDouble( StageShooter::getRawHitFactor ).average();
+                    System.out.println("Average Hit Factor: " + averageHitFactor.getAsDouble() * 1.25);
                     int roundCount = stageShooter.getStage().getRoundCount();
-                    double baseHandicapHitFactor = handicapFactors.get( roundCount );
+                    double baseHandicapHitFactor = averageHitFactor.getAsDouble() * 1.25;
+                    //if( handicapFactors.containsKey( roundCount ) )
+                    //{
+                    //    baseHandicapHitFactor = handicapFactors.get( roundCount );
+                    //}
 
                     if( stageShooter.getRawHitFactor() > 0 ) // Don't calculate handicap if they got a 0
                         handicap = handicap + (baseHandicapHitFactor - stageShooter.getRawHitFactor()) / roundCount;
+
+                    if( handicap > 0 )
+                        handicap = handicap * 0.75;
                 }
 
                 handicap = handicap / shooterStages.size();

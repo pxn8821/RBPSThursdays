@@ -17,7 +17,12 @@
                 paging: false,
                 "columnDefs": [
                   { "orderable": false, "targets": 0 }
-                ]
+                ],
+                scrollX: true,
+                fixedColumns: {
+                    start: 2,
+                    end: 0
+                }
             });
 
             dt.on('order.dt search.dt', function () {

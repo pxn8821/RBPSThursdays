@@ -47,7 +47,7 @@
       <tr th:each="shooter : ${shooters} ">
         <td></td>
         <td th:text="${shooter.name}"></td>
-        <td th:text="${shooter.currentPoints}"></td>
+        <td th:text="${shooter.getCurrentPointsDisplay}"></td>
         <td th:text="${shooter.getCurrentHandicapDisplay}"></td>
         <td th:text="${shooter.matchesShot}"></td>
         <td th:text="${shooter.stagesShot}"></td>

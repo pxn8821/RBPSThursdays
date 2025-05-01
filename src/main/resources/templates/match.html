@@ -16,14 +16,22 @@
         {
             order: [ [6, "desc"] ],
             paging: false,
-            scrollX: true
+            scrollX: true,
+            fixedColumns: {
+              start: 1,
+              end: 0
+            }
         });
 
         $(".summaryTable").dataTable(
         {
             order: [ [2, "desc"] ],
             paging: false,
-            scrollX: true
+            scrollX: true,
+            fixedColumns: {
+              start: 1,
+              end: 0
+            }
         });
 
     });

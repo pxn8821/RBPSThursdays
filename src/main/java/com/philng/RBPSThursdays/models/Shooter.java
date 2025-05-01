@@ -70,6 +70,10 @@ public class Shooter {
         this.currentPoints = currentPoints;
     }
 
+    public String getCurrentPointsDisplay()
+    {
+        return String.format("%.4f", getCurrentPoints());
+    }
     public String getCurrentHandicapDisplay()
     {
         return String.format("%.4f", getCurrentHandicap());
